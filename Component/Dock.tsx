@@ -161,15 +161,7 @@ export default function Dock({
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
 
-  const items: DockItemType[] = [
-    { icon: <VscHome size={24} />, label: 'Home', onClick: () => alert('Home!') },
-    { icon: <VscArchive size={24} />, label: 'Archive', onClick: () => alert('Archive!') },
-    { icon: <VscAccount size={24} />, label: 'Profile', onClick: () => alert('Profile!') },
-    { icon: <VscSettingsGear size={24} />, label: 'Settings', onClick: () => alert('Settings!') },
-    {
-      icon: <VscColorMode size={24} />, label: theme === 'dark' ? 'Light Mode' : 'Dark Mode', onClick: onToggleTheme,
-    },
-  ];
+  const items: DockItemType[] = [];
 
   return (
     <motion.div
