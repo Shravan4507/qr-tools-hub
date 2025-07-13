@@ -5,6 +5,8 @@ import '../Component/Squares.css';
 import Dock from '../Component/Dock';
 import '../Component/Dock.css';
 import TextPressure from '../Component/TextPressure';
+import MainQRPanel from '../Component/MainQRPanel';
+import '../Component/MainQRPanel.css';
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -61,6 +63,7 @@ function App() {
         borderColor="#271E37"
         hoverFillColor="#222222"
       />
+      <MainQRPanel />
       <div style={{ position: 'relative', zIndex: 1, paddingTop: '6.5rem' }}>
         {/* ...QR Tools Hub UI... */}
       </div>
