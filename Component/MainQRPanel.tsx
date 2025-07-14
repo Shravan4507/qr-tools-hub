@@ -2,16 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
 import AnimatedDropdown from './AnimatedDropdown';
 import './MainQRPanel.css';
+import QRForm from './QRForm';
+import QRPreview from './QRPreview';
+import QRHistory, { QRHistoryItem } from './QRHistory';
 
-type QRType = 'text' | 'upi' | 'url' | 'wifi' | 'vcard';
-
-interface QRHistoryItem {
-  id: string;
-  type: QRType;
-  content: string;
-  timestamp: number;
-  qrDataUrl: string;
-}
+export type QRType = 'text' | 'upi' | 'url' | 'wifi' | 'vcard';
 
 interface FormData {
   text?: string;
@@ -42,19 +37,20 @@ export default function MainQRPanel() {
   const [showPassword, setShowPassword] = useState(false);
   const [history, setHistory] = useState<QRHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load history from localStorage on component mount
+  // Load history from localStorage on mount
   useEffect(() => {
     const savedHistory = localStorage.getItem('qr-history');
     if (savedHistory) {
       try {
         setHistory(JSON.parse(savedHistory));
+        setError(null);
       } catch (error) {
-        console.error('Failed to load QR history:', error);
+        setError('Failed to load QR history. Please clear your browser storage or contact support.');
       }
     }
   }, []);
-
   // Save history to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('qr-history', JSON.stringify(history));
@@ -126,10 +122,14 @@ export default function MainQRPanel() {
       ...prev,
       [field]: value
     }));
+    setError(null);
   };
 
   const handleGenerate = async () => {
-    if (!validateForm(qrType, formData)) return;
+    if (!validateForm(qrType, formData)) {
+      setError('Please fill all required fields correctly.');
+      return;
+    }
     
     try {
       const qrContent = generateQRContent(qrType, formData);
@@ -156,8 +156,9 @@ export default function MainQRPanel() {
       };
 
       setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10 items
+      setError(null);
     } catch (err) {
-      console.error('QR Generation Failed:', err);
+      setError('QR Generation Failed. Please try again or check your input.');
     }
   };
 
@@ -191,8 +192,6 @@ export default function MainQRPanel() {
 
   const loadFromHistory = (item: QRHistoryItem) => {
     setQrType(item.type);
-    // Note: We can't fully restore form data from history display content
-    // This is a limitation of the current design
     setQrURL(item.qrDataUrl);
     setShowHistory(false);
   };
@@ -202,142 +201,22 @@ export default function MainQRPanel() {
     localStorage.removeItem('qr-history');
   };
 
-  const renderForm = () => {
-    switch (qrType) {
-      case 'text':
-        return (
-          <div className="form-container">
-            <input
-              type="text"
-              value={formData.text || ''}
-              onChange={(e) => handleInputChange('text', e.target.value)}
-              placeholder="Enter any text..."
-              className="qr-input"
-            />
-            <button onClick={handleGenerate} className="generate-btn">Generate QR</button>
-          </div>
-        );
-
-      case 'upi':
-        return (
-          <div className="form-container">
-            <div className="input-group">
-              <input
-                type="text"
-                value={formData.upiId || ''}
-                onChange={(e) => handleInputChange('upiId', e.target.value)}
-                placeholder="Enter UPI ID (e.g., user@upi)"
-                className="qr-input"
-              />
-              <input
-                type="number"
-                value={formData.amount || ''}
-                onChange={(e) => handleInputChange('amount', e.target.value)}
-                placeholder="Amount (optional)"
-                className="qr-input"
-              />
-            </div>
-            <button onClick={handleGenerate} className="generate-btn">Generate QR</button>
-          </div>
-        );
-
-      case 'url':
-        return (
-          <div className="form-container">
-            <input
-              type="text"
-              value={formData.url || ''}
-              onChange={(e) => handleInputChange('url', e.target.value)}
-              placeholder="Enter URL (e.g., google.com)"
-              className="qr-input"
-            />
-            <button onClick={handleGenerate} className="generate-btn">Generate QR</button>
-          </div>
-        );
-
-      case 'wifi':
-        return (
-          <div className="form-container">
-            <div className="input-group">
-              <input
-                type="text"
-                value={formData.ssid || ''}
-                onChange={(e) => handleInputChange('ssid', e.target.value)}
-                placeholder="Wi-Fi Network Name (SSID)"
-                className="qr-input"
-              />
-              <div className="password-input-group">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password || ''}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Password (optional)"
-                  className="qr-input"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle"
-                >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-            </div>
-            <button onClick={handleGenerate} className="generate-btn">Generate QR</button>
-          </div>
-        );
-
-      case 'vcard':
-        return (
-          <div className="form-container">
-            <div className="input-group">
-              <input
-                type="text"
-                value={formData.firstName || ''}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                placeholder="First Name"
-                className="qr-input"
-              />
-              <input
-                type="text"
-                value={formData.middleName || ''}
-                onChange={(e) => handleInputChange('middleName', e.target.value)}
-                placeholder="Middle Name (optional)"
-                className="qr-input"
-              />
-              <input
-                type="text"
-                value={formData.surname || ''}
-                onChange={(e) => handleInputChange('surname', e.target.value)}
-                placeholder="Surname"
-                className="qr-input"
-              />
-              <input
-                type="tel"
-                value={formData.phone || ''}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+91 Contact Number"
-                className="qr-input"
-              />
-              <input
-                type="email"
-                value={formData.email || ''}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Email ID"
-                className="qr-input"
-              />
-            </div>
-            <button onClick={handleGenerate} className="generate-btn">Generate QR</button>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="main-panel">
+      {error && (
+        <div style={{
+          background: '#ffebee',
+          color: '#b71c1c',
+          border: '1px solid #b71c1c',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          textAlign: 'center',
+          fontWeight: 500,
+        }}>
+          {error}
+        </div>
+      )}
       <h1 className="main-title">Welcome to QR Tools Hub</h1>
       <p className="main-subtitle">Your one-stop hub for smart QR code utilities.</p>
 
@@ -351,54 +230,29 @@ export default function MainQRPanel() {
         />
       </div>
 
-      {renderForm()}
+      <QRForm
+        qrType={qrType}
+        formData={formData}
+        onInputChange={handleInputChange}
+        onGenerate={handleGenerate}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        validateForm={validateForm}
+      />
 
-      {qrURL && (
-        <div className="qr-output">
-          <div className="qr-container">
-            <img src={qrURL} alt="Generated QR" />
-          </div>
-          <p className="qr-label">QR for: {getDisplayContent(qrType, formData)}</p>
-          <div className="qr-actions">
-            <button onClick={handleDownload} className="download-btn">
-              Download PNG
-            </button>
-          </div>
-        </div>
-      )}
+      <QRPreview
+        qrURL={qrURL}
+        label={getDisplayContent(qrType, formData)}
+        onDownload={handleDownload}
+      />
 
-      <div className="history-section">
-        <div className="history-header">
-          <button 
-            onClick={() => setShowHistory(!showHistory)} 
-            className="history-toggle"
-          >
-            {showHistory ? 'Hide' : 'Show'} History ({history.length})
-          </button>
-          {history.length > 0 && (
-            <button onClick={clearHistory} className="clear-history-btn">
-              Clear History
-            </button>
-          )}
-        </div>
-        
-        {showHistory && history.length > 0 && (
-          <div className="history-list">
-            {history.map((item) => (
-              <div key={item.id} className="history-item" onClick={() => loadFromHistory(item)}>
-                <img src={item.qrDataUrl} alt="QR" className="history-qr" />
-                <div className="history-details">
-                  <span className="history-type">{item.type.toUpperCase()}</span>
-                  <span className="history-content">{item.content}</span>
-                  <span className="history-time">
-                    {new Date(item.timestamp).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <QRHistory
+        history={history}
+        showHistory={showHistory}
+        onToggleHistory={() => setShowHistory(!showHistory)}
+        onClearHistory={clearHistory}
+        onLoadFromHistory={loadFromHistory}
+      />
     </div>
   );
 } 
