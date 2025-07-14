@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedList from './AnimatedList';
 import './AnimatedDropdown.css';
@@ -24,6 +24,7 @@ export default function AnimatedDropdown({
   className = ''
 }: AnimatedDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownError, setDropdownError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find(option => option.value === value);
@@ -40,8 +41,13 @@ export default function AnimatedDropdown({
   }, []);
 
   const handleSelect = (item: string, index: number) => {
-    onChange(options[index].value);
-    setIsOpen(false);
+    try {
+      onChange(options[index].value);
+      setIsOpen(false);
+      setDropdownError(null);
+    } catch (err) {
+      setDropdownError('Failed to select option. Please try again.');
+    }
   };
 
   return (
@@ -63,7 +69,9 @@ export default function AnimatedDropdown({
           ▼
         </motion.span>
       </motion.button>
-
+      {dropdownError && (
+        <div role="alert" style={{ color: '#b71c1c', fontSize: '0.95em', marginTop: 4 }}>{dropdownError}</div>
+      )}
       <AnimatePresence>
         {isOpen && (
           <motion.div

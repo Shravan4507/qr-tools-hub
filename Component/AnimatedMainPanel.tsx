@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import MainQRPanel from './MainQRPanel';
 import './AnimatedMainPanel.css';
@@ -52,19 +52,25 @@ const AnimatedMainPanel = ({
   const memoizedParticles = useRef<HTMLDivElement[]>([]);
   const particlesInitialized = useRef(false);
   const magnetismAnimationRef = useRef<gsap.core.Tween | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const initializeParticles = useCallback(() => {
     if (particlesInitialized.current || !panelRef.current) return;
 
     const { width, height } = panelRef.current.getBoundingClientRect();
-    memoizedParticles.current = Array.from({ length: particleCount }, () =>
-      createParticleElement(
-        Math.random() * width,
-        Math.random() * height,
-        glowColor
-      )
-    );
-    particlesInitialized.current = true;
+    try {
+      memoizedParticles.current = Array.from({ length: particleCount }, () =>
+        createParticleElement(
+          Math.random() * width,
+          Math.random() * height,
+          glowColor
+        )
+      );
+      particlesInitialized.current = true;
+      setError(null);
+    } catch (err) {
+      setError('Failed to initialize animation. Try reloading the page.');
+    }
   }, [particleCount, glowColor]);
 
   const clearAllParticles = useCallback(() => {
@@ -97,33 +103,38 @@ const AnimatedMainPanel = ({
       const timeoutId = setTimeout(() => {
         if (!isHoveredRef.current || !panelRef.current) return;
 
-        const clone = particle.cloneNode(true) as HTMLDivElement;
-        panelRef.current!.appendChild(clone);
-        particlesRef.current.push(clone);
+        try {
+          const clone = particle.cloneNode(true) as HTMLDivElement;
+          panelRef.current!.appendChild(clone);
+          particlesRef.current.push(clone);
 
-        gsap.fromTo(
-          clone,
-          { scale: 0, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
-        );
+          gsap.fromTo(
+            clone,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
+          );
 
-        gsap.to(clone, {
-          x: (Math.random() - 0.5) * 80,
-          y: (Math.random() - 0.5) * 80,
-          rotation: Math.random() * 360,
-          duration: 2 + Math.random() * 2,
-          ease: "none",
-          repeat: -1,
-          yoyo: true,
-        });
+          gsap.to(clone, {
+            x: (Math.random() - 0.5) * 80,
+            y: (Math.random() - 0.5) * 80,
+            rotation: Math.random() * 360,
+            duration: 2 + Math.random() * 2,
+            ease: "none",
+            repeat: -1,
+            yoyo: true,
+          });
 
-        gsap.to(clone, {
-          opacity: 0.3,
-          duration: 1.5,
-          ease: "power2.inOut",
-          repeat: -1,
-          yoyo: true,
-        });
+          gsap.to(clone, {
+            opacity: 0.3,
+            duration: 1.5,
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+          setError(null);
+        } catch (err) {
+          setError('Animation error. Try reloading the page.');
+        }
       }, index * 150);
 
       timeoutsRef.current.push(timeoutId);
@@ -282,6 +293,24 @@ const AnimatedMainPanel = ({
       className="animated-main-panel"
       style={{ position: "relative", overflow: "hidden" }}
     >
+      {error && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: '#ffebee',
+          color: '#b71c1c',
+          border: '1px solid #b71c1c',
+          borderRadius: '8px',
+          padding: '1rem',
+          zIndex: 10,
+          textAlign: 'center',
+          fontWeight: 500,
+        }}>
+          {error}
+        </div>
+      )}
       <MainQRPanel />
     </div>
   );

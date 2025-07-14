@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import "./MagicBento.css";
+import { MdQrCode2, MdPayments, MdWifi, MdContactMail, MdLink, MdTextFields } from 'react-icons/md';
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 400;
@@ -9,39 +10,39 @@ const MOBILE_BREAKPOINT = 768;
 
 const cardData = [
   {
-    color: "#060010",
+    icon: <MdQrCode2 size={44} color="#8b5cf6" />,
     title: "QR Generator",
-    description: "Create QR codes for any content",
-    label: "Generate",
+    description: "Generate high-quality QR codes for any type of content, including text, links, payments, Wi-Fi, and more. Fast, reliable, and customizable.",
+    label: "QR Code",
   },
   {
-    color: "#060010",
+    icon: <MdPayments size={44} color="#8b5cf6" />,
     title: "UPI Payments",
-    description: "Quick payment QR codes",
+    description: "Create secure UPI payment QR codes for instant transactions. Perfect for businesses, freelancers, and personal use.",
     label: "Payments",
   },
   {
-    color: "#060010",
+    icon: <MdWifi size={44} color="#8b5cf6" />,
     title: "Wi-Fi Sharing",
-    description: "Share network credentials",
-    label: "Connect",
+    description: "Easily share your Wi-Fi credentials with guests using a QR code. No more typing passwords—just scan and connect!",
+    label: "Wi-Fi",
   },
   {
-    color: "#060010",
-    title: "Contact Cards",
-    description: "Share contact information",
-    label: "Contacts",
+    icon: <MdContactMail size={44} color="#8b5cf6" />,
+    title: "Contact Cards (vCard)",
+    description: "Share your contact details instantly with a vCard QR code. Great for networking, business cards, and events.",
+    label: "Contact",
   },
   {
-    color: "#060010",
+    icon: <MdLink size={44} color="#8b5cf6" />,
     title: "URL Shortener",
-    description: "Create QR for websites",
+    description: "Turn any website link into a QR code for easy sharing and access. Ideal for marketing, print, and digital campaigns.",
     label: "Links",
   },
   {
-    color: "#060010",
+    icon: <MdTextFields size={44} color="#8b5cf6" />,
     title: "Text QR",
-    description: "Simple text QR codes",
+    description: "Convert plain text into a QR code for quick notes, messages, or codes. Simple, fast, and effective.",
     label: "Text",
   },
 ];
@@ -120,19 +121,25 @@ const ParticleCard = ({
   const memoizedParticles = useRef<HTMLDivElement[]>([]);
   const particlesInitialized = useRef(false);
   const magnetismAnimationRef = useRef<gsap.core.Tween | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const initializeParticles = useCallback(() => {
     if (particlesInitialized.current || !cardRef.current) return;
 
     const { width, height } = cardRef.current.getBoundingClientRect();
-    memoizedParticles.current = Array.from({ length: particleCount }, () =>
-      createParticleElement(
-        Math.random() * width,
-        Math.random() * height,
-        glowColor
-      )
-    );
-    particlesInitialized.current = true;
+    try {
+      memoizedParticles.current = Array.from({ length: particleCount }, () =>
+        createParticleElement(
+          Math.random() * width,
+          Math.random() * height,
+          glowColor
+        )
+      );
+      particlesInitialized.current = true;
+      setError(null);
+    } catch (err) {
+      setError('Failed to initialize animation. Try reloading the page.');
+    }
   }, [particleCount, glowColor]);
 
   const clearAllParticles = useCallback(() => {
@@ -164,34 +171,38 @@ const ParticleCard = ({
     memoizedParticles.current.forEach((particle, index) => {
       const timeoutId = setTimeout(() => {
         if (!isHoveredRef.current || !cardRef.current) return;
+        try {
+          const clone = particle.cloneNode(true) as HTMLDivElement;
+          cardRef.current!.appendChild(clone);
+          particlesRef.current.push(clone);
 
-        const clone = particle.cloneNode(true) as HTMLDivElement;
-        cardRef.current!.appendChild(clone);
-        particlesRef.current.push(clone);
+          gsap.fromTo(
+            clone,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
+          );
 
-        gsap.fromTo(
-          clone,
-          { scale: 0, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
-        );
+          gsap.to(clone, {
+            x: (Math.random() - 0.5) * 100,
+            y: (Math.random() - 0.5) * 100,
+            rotation: Math.random() * 360,
+            duration: 2 + Math.random() * 2,
+            ease: "none",
+            repeat: -1,
+            yoyo: true,
+          });
 
-        gsap.to(clone, {
-          x: (Math.random() - 0.5) * 100,
-          y: (Math.random() - 0.5) * 100,
-          rotation: Math.random() * 360,
-          duration: 2 + Math.random() * 2,
-          ease: "none",
-          repeat: -1,
-          yoyo: true,
-        });
-
-        gsap.to(clone, {
-          opacity: 0.3,
-          duration: 1.5,
-          ease: "power2.inOut",
-          repeat: -1,
-          yoyo: true,
-        });
+          gsap.to(clone, {
+            opacity: 0.3,
+            duration: 1.5,
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+          setError(null);
+        } catch (err) {
+          setError('Animation error. Try reloading the page.');
+        }
       }, index * 100);
 
       timeoutsRef.current.push(timeoutId);
@@ -350,6 +361,24 @@ const ParticleCard = ({
       className={`${className} particle-container`}
       style={{ ...style, position: "relative", overflow: "hidden" }}
     >
+      {error && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: '#ffebee',
+          color: '#b71c1c',
+          border: '1px solid #b71c1c',
+          borderRadius: '8px',
+          padding: '1rem',
+          zIndex: 10,
+          textAlign: 'center',
+          fontWeight: 500,
+        }}>
+          {error}
+        </div>
+      )}
       {children}
     </div>
   );
@@ -587,7 +616,7 @@ const MagicBento = ({
           const cardProps = {
             className: baseClassName,
             style: {
-              backgroundColor: card.color,
+              backgroundColor: "#060010", // Default background color
               "--glow-color": glowColor,
             }
           };
@@ -604,7 +633,8 @@ const MagicBento = ({
                 clickEffect={clickEffect}
                 enableMagnetism={enableMagnetism}
               >
-                <div className="card__header">
+                <div className="card__header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '0.5em' }}>
+                  <div>{card.icon}</div>
                   <div className="card__label">{card.label}</div>
                 </div>
                 <div className="card__content">

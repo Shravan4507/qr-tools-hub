@@ -21,10 +21,7 @@ import { VscHome, VscArchive, VscAccount, VscSettingsGear, VscColorMode, VscInfo
 import "./Dock.css";
 
 export interface DockProps {
-  theme: 'light' | 'dark';
-  onToggleTheme: () => void;
   onHome: () => void;
-  onHistory: () => void;
   onSettings: () => void;
   onAbout: () => void;
   getHistoryButtonRect?: (rect: DOMRect | null) => void;
@@ -140,10 +137,7 @@ function DockIcon({ children, className = "" }: { children: ReactNode; className
 }
 
 export default function Dock({
-  theme,
-  onToggleTheme,
   onHome,
-  onHistory,
   onSettings,
   onAbout,
   getHistoryButtonRect,
@@ -202,9 +196,6 @@ export default function Dock({
   const items: DockItemType[] = [
     {
       icon: <VscHome size={28} />, label: "Home", onClick: onHome, className: "dock-home"
-    },
-    {
-      icon: <VscColorMode size={28} />, label: theme === 'dark' ? "Light Mode" : "Dark Mode", onClick: onToggleTheme, className: "dock-theme"
     },
     {
       icon: <VscSettingsGear size={28} />, label: "Settings", onClick: onSettings, className: "dock-settings"

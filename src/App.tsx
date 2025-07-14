@@ -15,11 +15,6 @@ import type { QRHistoryItem } from '../Component/QRHistory';
 import ErrorBoundary from '../Component/ErrorBoundary';
 
 function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-    return 'light';
-  });
-
   const mainQRPanelRef = useRef<HTMLDivElement>(null);
   const [history, setHistory] = useState<QRHistoryItem[]>([]);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
@@ -50,12 +45,6 @@ function App() {
       localStorage.setItem('qr-history', JSON.stringify(history));
     }
   }, [history, historyLoaded]);
-
-  useEffect(() => {
-    document.body.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
   const handleTryNowClick = () => {
     mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -200,12 +189,7 @@ function App() {
           </div>
 
           <div ref={mainQRPanelRef}>
-            <MainQRPanel 
-              history={history}
-              setHistory={setHistory}
-              pendingHistoryItem={pendingHistoryItem}
-              setPendingHistoryItem={setPendingHistoryItem}
-            />
+            <MainQRPanel />
             <QRHistoryPanel
               open={showHistoryPanel}
               onClose={() => setShowHistoryPanel(false)}
@@ -217,10 +201,7 @@ function App() {
           </div>
         </div>
         <Dock 
-          theme={theme} 
-          onToggleTheme={toggleTheme}
           onHome={handleHome}
-          onHistory={handleHistory}
           onSettings={handleSettings}
           onAbout={handleAbout}
           getHistoryButtonRect={handleHistoryBtnRect}
