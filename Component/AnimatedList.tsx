@@ -1,10 +1,18 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, ReactNode } from 'react';
 import { motion, useInView } from 'framer-motion';
 import './AnimatedList.css';
 
-const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { amount: 0.5, triggerOnce: false });
+interface AnimatedItemProps {
+  children: ReactNode;
+  delay?: number;
+  index: number;
+  onMouseEnter: () => void;
+  onClick: () => void;
+}
+
+const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }: AnimatedItemProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { amount: 0.5 });
   return (
     <motion.div
       ref={ref}
@@ -21,6 +29,19 @@ const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => 
   );
 };
 
+interface AnimatedListProps {
+  items?: string[];
+  onItemSelect: (item: string, index: number) => void;
+  showGradients?: boolean;
+  enableArrowNavigation?: boolean;
+  className?: string;
+  itemClassName?: string;
+  displayScrollbar?: boolean;
+  initialSelectedIndex?: number;
+  itemTabIndex?: number;
+  itemAriaLabelPrefix?: string;
+}
+
 const AnimatedList = ({
   items = [
     'Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5',
@@ -34,15 +55,17 @@ const AnimatedList = ({
   itemClassName = '',
   displayScrollbar = true,
   initialSelectedIndex = -1,
-}) => {
-  const listRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex);
+  itemTabIndex,
+  itemAriaLabelPrefix,
+}: AnimatedListProps) => {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(initialSelectedIndex);
   const [keyboardNav, setKeyboardNav] = useState(false);
   const [topGradientOpacity, setTopGradientOpacity] = useState(0);
   const [bottomGradientOpacity, setBottomGradientOpacity] = useState(1);
 
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     setTopGradientOpacity(Math.min(scrollTop / 50, 1));
     const bottomDistance = scrollHeight - (scrollTop + clientHeight);
     setBottomGradientOpacity(
@@ -52,7 +75,7 @@ const AnimatedList = ({
 
   useEffect(() => {
     if (!enableArrowNavigation) return;
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
         e.preventDefault();
         setKeyboardNav(true);
@@ -77,8 +100,8 @@ const AnimatedList = ({
 
   useEffect(() => {
     if (!keyboardNav || selectedIndex < 0 || !listRef.current) return;
-    const container = listRef.current;
-    const selectedItem = container.querySelector(`[data-index="${selectedIndex}"]`);
+    const container = listRef.current as HTMLDivElement;
+    const selectedItem = container.querySelector(`[data-index="${selectedIndex}"]`) as HTMLElement | null;
     if (selectedItem) {
       const extraMargin = 50;
       const containerScrollTop = container.scrollTop;
@@ -117,7 +140,10 @@ const AnimatedList = ({
               }
             }}
           >
-            <div className={`item ${selectedIndex === index ? 'selected' : ''} ${itemClassName}`}>
+            <div className={`item ${selectedIndex === index ? 'selected' : ''} ${itemClassName}`}
+              tabIndex={itemTabIndex}
+              aria-label={itemAriaLabelPrefix ? `${itemAriaLabelPrefix}${item}` : undefined}
+            >
               <p className="item-text">{item}</p>
             </div>
           </AnimatedItem>

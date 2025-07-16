@@ -166,7 +166,12 @@ export default function Dock({
       }
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    // Start auto-hide timer on mount
+    startHideTimer();
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
   }, []);
 
   // Hide dock after delay when not hovered

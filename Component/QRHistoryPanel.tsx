@@ -10,6 +10,8 @@ interface QRHistoryPanelProps {
   onClearHistory: () => void;
   onLoadFromHistory: (item: QRHistoryItem) => void;
   dockHistoryBtnRect?: DOMRect | null;
+  onExportHistory?: () => void;
+  onImportHistory?: (imported: QRHistoryItem[]) => void;
 }
 
 const genieVariants = {
@@ -18,7 +20,7 @@ const genieVariants = {
   exit: { opacity: 0, scale: 0.7, y: 100, transition: { duration: 0.22 } },
 };
 
-const QRHistoryPanel: React.FC<QRHistoryPanelProps> = ({ open, onClose, history, onClearHistory, onLoadFromHistory, dockHistoryBtnRect }) => {
+const QRHistoryPanel: React.FC<QRHistoryPanelProps> = ({ open, onClose, history, onClearHistory, onLoadFromHistory, dockHistoryBtnRect, onExportHistory, onImportHistory }) => {
   // Calculate modal position and transformOrigin
   let modalStyle: React.CSSProperties = {};
   let initialObj: any = undefined, animateObj: any = undefined, exitObj: any = undefined;
@@ -36,6 +38,26 @@ const QRHistoryPanel: React.FC<QRHistoryPanelProps> = ({ open, onClose, history,
     animateObj = { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as AnimationGeneratorType, stiffness: 320, damping: 28 } };
     exitObj = { opacity: 0, scale: 0.7, y: 60, transition: { duration: 0.22 } };
   }
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target?.result as string);
+        if (Array.isArray(imported) && onImportHistory) {
+          onImportHistory(imported);
+        }
+      } catch (err) {
+        alert('Failed to import history. Invalid file.');
+      }
+    };
+    reader.readAsText(file);
+  };
   return (
     <AnimatePresence>
       {open && (
@@ -67,6 +89,9 @@ const QRHistoryPanel: React.FC<QRHistoryPanelProps> = ({ open, onClose, history,
               {history.length > 0 && (
                 <button className="clear-history-btn" onClick={onClearHistory}>Clear History</button>
               )}
+              <button className="clear-history-btn" style={{ background: '#5227ff', marginLeft: 8 }} onClick={onExportHistory}>Export</button>
+              <button className="clear-history-btn" style={{ background: '#8b5cf6', marginLeft: 8 }} onClick={handleImportClick}>Import</button>
+              <input type="file" accept="application/json" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
             </div>
             <div className="qr-history-modal-list">
               {history.length === 0 ? (

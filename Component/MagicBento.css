@@ -61,6 +61,8 @@
 
 .card__content {
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .card__label {
@@ -101,6 +103,36 @@
 .card--text-autohide .card__description {
   -webkit-line-clamp: var(--clamp-desc);
   line-clamp: var(--clamp-desc);
+}
+
+.card__img {
+  display: block;
+  margin: 0.7em auto 0.5em auto;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 2px;
+  box-shadow: 0 2px 12px rgba(132, 0, 255, 0.10), 0 1.5px 6px rgba(0,0,0,0.08);
+  background: rgba(132,0,255,0.03);
+  /* Remove transition and hover effect for static appearance */
+}
+
+.card__img--large {
+  width: 250px;
+  height: 250px;
+  align-self: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.card__img:focus,
+.card__img--large:focus,
+.card__icon:focus {
+  outline: 2.5px solid #8b5cf6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  z-index: 2;
 }
 
 @media (max-width: 599px) {

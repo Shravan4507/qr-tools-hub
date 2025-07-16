@@ -4,9 +4,10 @@ interface QRPreviewProps {
   qrURL: string;
   label: string;
   onDownload: () => void;
+  onCopy?: () => void;
 }
 
-const QRPreview: React.FC<QRPreviewProps> = ({ qrURL, label, onDownload }) => {
+const QRPreview: React.FC<QRPreviewProps> = ({ qrURL, label, onDownload, onCopy }) => {
   const [imgError, setImgError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   if (!qrURL) return null;
@@ -32,6 +33,11 @@ const QRPreview: React.FC<QRPreviewProps> = ({ qrURL, label, onDownload }) => {
         <button onClick={onDownload} className="download-btn" disabled={imgError}>
           Download PNG
         </button>
+        {onCopy && (
+          <button onClick={onCopy} className="download-btn" style={{ marginLeft: 12 }} disabled={imgError}>
+            Copy
+          </button>
+        )}
       </div>
     </div>
   );

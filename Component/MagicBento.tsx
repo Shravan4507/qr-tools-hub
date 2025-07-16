@@ -2,6 +2,13 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import "./MagicBento.css";
 import { MdQrCode2, MdPayments, MdWifi, MdContactMail, MdLink, MdTextFields } from 'react-icons/md';
+import About1Img from '../assets/about/About1.png';
+import UpiQRImg from '../assets/about/upi-qr.png';
+import WifiQRImg from '../assets/about/wifi-qr.png';
+import VcardQRImg from '../assets/about/vcard-qr.png';
+import UrlQRImg from '../assets/about/url-qr.png';
+import TextQRImg from '../assets/about/text-qr.png';
+import { motion } from 'framer-motion';
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 400;
@@ -14,36 +21,48 @@ const cardData = [
     title: "QR Generator",
     description: "Generate high-quality QR codes for any type of content, including text, links, payments, Wi-Fi, and more. Fast, reliable, and customizable.",
     label: "QR Code",
+    img: About1Img, // Use About1.png for QR Code label
+    // No qrType for this card (no redirect)
   },
   {
     icon: <MdPayments size={44} color="#8b5cf6" />,
     title: "UPI Payments",
     description: "Create secure UPI payment QR codes for instant transactions. Perfect for businesses, freelancers, and personal use.",
     label: "Payments",
+    img: UpiQRImg,
+    qrType: 'upi',
   },
   {
     icon: <MdWifi size={44} color="#8b5cf6" />,
     title: "Wi-Fi Sharing",
     description: "Easily share your Wi-Fi credentials with guests using a QR code. No more typing passwords—just scan and connect!",
     label: "Wi-Fi",
+    img: WifiQRImg,
+    qrType: 'wifi',
   },
   {
     icon: <MdContactMail size={44} color="#8b5cf6" />,
     title: "Contact Cards (vCard)",
     description: "Share your contact details instantly with a vCard QR code. Great for networking, business cards, and events.",
     label: "Contact",
+    img: VcardQRImg,
+    qrType: 'vcard',
   },
   {
     icon: <MdLink size={44} color="#8b5cf6" />,
     title: "URL Shortener",
     description: "Turn any website link into a QR code for easy sharing and access. Ideal for marketing, print, and digital campaigns.",
     label: "Links",
+    img: UrlQRImg,
+    qrType: 'url',
   },
   {
     icon: <MdTextFields size={44} color="#8b5cf6" />,
     title: "Text QR",
     description: "Convert plain text into a QR code for quick notes, messages, or codes. Simple, fast, and effective.",
     label: "Text",
+    img: TextQRImg, // Use text-qr.png for Text label
+    qrType: 'text', // This will redirect to Plain Text in MainQRPanel
   },
 ];
 
@@ -579,6 +598,12 @@ interface MagicBentoProps {
   glowColor?: string;
   clickEffect?: boolean;
   enableMagnetism?: boolean;
+  onUpiQRClick?: () => void;
+  onTextQRClick?: () => void;
+  onWifiQRClick?: () => void;
+  onVcardQRClick?: () => void;
+  onUrlQRClick?: () => void;
+  onQrCodeImgClick?: () => void;
 }
 
 const MagicBento = ({
@@ -593,6 +618,12 @@ const MagicBento = ({
   glowColor = DEFAULT_GLOW_COLOR,
   clickEffect = true,
   enableMagnetism = true,
+  onUpiQRClick,
+  onTextQRClick,
+  onWifiQRClick,
+  onVcardQRClick,
+  onUrlQRClick,
+  onQrCodeImgClick,
 }: MagicBentoProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
@@ -621,27 +652,88 @@ const MagicBento = ({
             }
           };
 
+          // Tooltip text for QR images
+          let qrTooltip = '';
+          if (card.label === 'QR Code') qrTooltip = 'Reload page';
+          else if (card.label === 'Payments') qrTooltip = 'Go to UPI Payments';
+          else if (card.label === 'Wi-Fi') qrTooltip = 'Go to Wi-Fi QR';
+          else if (card.label === 'Contact') qrTooltip = 'Go to Contact Card';
+          else if (card.label === 'Links') qrTooltip = 'Go to URL QR';
+          else if (card.label === 'Text') qrTooltip = 'Go to Plain Text QR';
+
+          // Tooltip text for icons
+          let iconTooltip = card.label;
+
+          // Framer Motion animation variants
+          const cardVariants = {
+            hidden: { opacity: 0, y: 40 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: index * 0.08 } }
+          };
+
           if (enableStars) {
             return (
-              <ParticleCard
+              <motion.div
                 key={index}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
                 {...cardProps}
-                disableAnimations={shouldDisableAnimations}
-                particleCount={particleCount}
-                glowColor={glowColor}
-                enableTilt={enableTilt}
-                clickEffect={clickEffect}
-                enableMagnetism={enableMagnetism}
+                className={baseClassName + ' particle-container'}
+                style={{ ...cardProps.style, position: "relative", overflow: "hidden" }}
               >
                 <div className="card__header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '0.5em' }}>
-                  <div>{card.icon}</div>
+                  <div title={iconTooltip} tabIndex={0} aria-label={iconTooltip} className="card__icon" onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      // No click action for icon, but could add if needed
+                    }
+                  }}>{card.icon}</div>
                   <div className="card__label">{card.label}</div>
                 </div>
                 <div className="card__content">
+                  {card.img && (
+                    <img
+                      src={card.img}
+                      alt=""
+                      className={
+                        card.label === 'Wi-Fi' || card.label === 'Contact'
+                          ? 'card__img card__img--large'
+                          : 'card__img'
+                      }
+                      title={qrTooltip}
+                      tabIndex={0}
+                      aria-label={qrTooltip}
+                      onClick={
+                        card.label === 'QR Code' ? onQrCodeImgClick :
+                        card.qrType === 'upi' ? onUpiQRClick :
+                        card.qrType === 'text' && card.label === 'Text' ? onTextQRClick :
+                        card.qrType === 'wifi' ? onWifiQRClick :
+                        card.qrType === 'vcard' ? onVcardQRClick :
+                        card.qrType === 'url' ? onUrlQRClick :
+                        undefined
+                      }
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          const fn =
+                            card.label === 'QR Code' ? onQrCodeImgClick :
+                            card.qrType === 'upi' ? onUpiQRClick :
+                            card.qrType === 'text' && card.label === 'Text' ? onTextQRClick :
+                            card.qrType === 'wifi' ? onWifiQRClick :
+                            card.qrType === 'vcard' ? onVcardQRClick :
+                            card.qrType === 'url' ? onUrlQRClick :
+                            undefined;
+                          if (fn) fn();
+                        }
+                      }}
+                      style={
+                        card.label === 'QR Code' || card.qrType === 'upi' || (card.qrType === 'text' && card.label === 'Text') || card.qrType === 'wifi' || card.qrType === 'vcard' || card.qrType === 'url' ? { cursor: 'pointer' } : {}
+                      }
+                    />
+                  )}
                   <h2 className="card__title">{card.title}</h2>
-                  <p className="card__description">{card.description}</p>
                 </div>
-              </ParticleCard>
+              </motion.div>
             );
           }
 
@@ -762,7 +854,6 @@ const MagicBento = ({
               </div>
               <div className="card__content">
                 <h2 className="card__title">{card.title}</h2>
-                <p className="card__description">{card.description}</p>
               </div>
             </div>
           );

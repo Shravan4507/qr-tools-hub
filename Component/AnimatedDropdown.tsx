@@ -57,6 +57,14 @@ export default function AnimatedDropdown({
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        tabIndex={0}
+        aria-label={isOpen ? 'Close dropdown' : 'Open dropdown'}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
       >
         <span className="dropdown-value">
           {selectedOption ? selectedOption.label : placeholder}
@@ -88,6 +96,8 @@ export default function AnimatedDropdown({
               enableArrowNavigation={true}
               displayScrollbar={true}
               className="dropdown-list"
+              itemTabIndex={0}
+              itemAriaLabelPrefix="Select option: "
             />
           </motion.div>
         )}

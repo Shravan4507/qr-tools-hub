@@ -67,4 +67,11 @@
   background: linear-gradient(to top, #060010, transparent);
   pointer-events: none;
   transition: opacity 0.3s ease;
+}
+
+.item:focus {
+  outline: 2.5px solid #8b5cf6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  z-index: 2;
 } 

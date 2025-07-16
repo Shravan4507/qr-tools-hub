@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import AnimatedDropdown from './AnimatedDropdown';
 import './MainQRPanel.css';
 import QRForm from './QRForm';
 import QRPreview from './QRPreview';
+import { toast } from 'react-toastify';
 import QRHistory, { QRHistoryItem } from './QRHistory';
 
 export type QRType = 'text' | 'upi' | 'url' | 'wifi' | 'vcard';
@@ -30,7 +31,7 @@ const QR_TYPE_OPTIONS = [
   { value: 'vcard', label: 'vCard (Contact Info)' }
 ];
 
-export default function MainQRPanel() {
+export default function MainQRPanel({ forceQrType, setForceQrType }: { forceQrType?: string | null, setForceQrType?: (v: string | null) => void }) {
   const [qrType, setQrType] = useState<QRType>('text');
   const [formData, setFormData] = useState<FormData>({});
   const [qrURL, setQrURL] = useState('');
@@ -61,6 +62,14 @@ export default function MainQRPanel() {
     setFormData({});
     setQrURL('');
   }, [qrType]);
+
+  // Listen for forceQrType prop changes
+  useEffect(() => {
+    if (forceQrType && QR_TYPE_OPTIONS.some(opt => opt.value === forceQrType)) {
+      setQrType(forceQrType as QRType);
+      setForceQrType && setForceQrType(null);
+    }
+  }, [forceQrType, setForceQrType]);
 
   const generateQRContent = (type: QRType, data: FormData): string => {
     switch (type) {
@@ -190,6 +199,16 @@ export default function MainQRPanel() {
     document.body.removeChild(link);
   };
 
+  const handleCopy = useCallback(() => {
+    const qrContent = generateQRContent(qrType, formData);
+    if (!qrContent) return;
+    navigator.clipboard.writeText(qrContent).then(() => {
+      toast.success('Copied to clipboard!');
+    }).catch(() => {
+      toast.error('Failed to copy.');
+    });
+  }, [qrType, formData]);
+
   const loadFromHistory = (item: QRHistoryItem) => {
     setQrType(item.type);
     setQrURL(item.qrDataUrl);
@@ -244,6 +263,7 @@ export default function MainQRPanel() {
         qrURL={qrURL}
         label={getDisplayContent(qrType, formData)}
         onDownload={handleDownload}
+        onCopy={handleCopy}
       />
 
       <QRHistory

@@ -13,6 +13,8 @@ import MainQRPanel from '../Component/MainQRPanel';
 import QRHistoryPanel from '../Component/QRHistoryPanel';
 import type { QRHistoryItem } from '../Component/QRHistory';
 import ErrorBoundary from '../Component/ErrorBoundary';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const mainQRPanelRef = useRef<HTMLDivElement>(null);
@@ -24,6 +26,9 @@ function App() {
   const handleHistoryBtnRect = useCallback((rect: DOMRect | null) => {
     setHistoryBtnRect(rect);
   }, []);
+
+  // Add state to control MainQRPanel QR type
+  const [forceQrType, setForceQrType] = useState<string | null>(null);
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -75,42 +80,80 @@ function App() {
     setShowHistoryPanel(false);
   };
 
+  // Handler for UPI QR click in MagicBento
+  const handleUpiQRClick = () => {
+    mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setForceQrType('upi');
+  };
+
+  // Handlers for each QR click in MagicBento
+  const handleTextQRClick = () => {
+    mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setForceQrType('text');
+  };
+  const handleWifiQRClick = () => {
+    mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setForceQrType('wifi');
+  };
+  const handleVcardQRClick = () => {
+    mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setForceQrType('vcard');
+  };
+  const handleUrlQRClick = () => {
+    mainQRPanelRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setForceQrType('url');
+  };
+
+  // Handler for QR Code card image click (reload page)
+  const handleQrCodeImgClick = () => {
+    window.location.reload();
+  };
+
+  // Export history as JSON
+  const handleExportHistory = () => {
+    const dataStr = JSON.stringify(history, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'qr-history.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import history from JSON
+  const handleImportHistory = (imported: QRHistoryItem[]) => {
+    if (Array.isArray(imported)) {
+      setHistory(imported);
+      localStorage.setItem('qr-history', JSON.stringify(imported));
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div>
+        <ToastContainer position="top-center" autoClose={2000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         {/* Top Heading Section */}
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
           width: '100%',
-          zIndex: 1001,
-          display: 'flex',
-          justifyContent: 'center',
-          background: 'transparent',
-          pointerEvents: 'none',
+          maxWidth: 550,
+          margin: '0 auto',
+          textAlign: 'center',
         }}>
-          <div style={{
-            width: '100%',
-            maxWidth: 500,
-            maxHeight: 500,
-            minWidth: 0,
-            margin: '1.2rem auto 0',
-            pointerEvents: 'auto',
-          }}>
-            <TextPressure
-              text="QR TOOLS HUB"
-              flex={true}
-              alpha={false}
-              stroke={false}
-              width={true}
-              weight={true}
-              italic={true}
-              textColor="#ffffff"
-              strokeColor="#ff0000"
-              minFontSize={28}
-            />
-          </div>
+          <TextPressure
+            text="QR TOOLS HUB"
+            flex={true}
+            alpha={false}
+            stroke={false}
+            width={true}
+            weight={true}
+            italic={true}
+            textColor="#ffffff"
+            strokeColor="#ff0000"
+            minFontSize={28}
+          />
         </div>
         <Squares
           speed={0.2}
@@ -119,11 +162,11 @@ function App() {
           borderColor="#271E37"
           hoverFillColor="#222222"
         />
-        <div style={{ position: 'relative', zIndex: 1, paddingTop: '6.5rem' }}>
+        <div style={{ position: 'relative', zIndex: 1, paddingTop: '0' }}>
           {/* Features Section */}
           <div style={{ 
-            marginTop: '5rem', 
-            paddingBottom: '8rem',
+            marginTop: '0', 
+            paddingBottom: '0',
             position: 'relative',
             zIndex: 1
           }}>
@@ -142,16 +185,16 @@ function App() {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
               }}>
-                QR Tools Features
+                Seamless QR Creations
               </h2>
               <p style={{
-                fontSize: '1.1rem',
+                fontSize: '1.6rem',
                 color: '#ccc',
-                maxWidth: '600px',
+                maxWidth: '800px',
                 margin: '0 auto',
-                lineHeight: '1.6'
+                lineHeight: '1.5'
               }}>
-                Explore our comprehensive suite of QR code generation tools designed for every use case
+                Beyond the Barcode. Simplify, connect, and thrive with our advanced QR code solutions, engineered to transform your every interaction.
               </p>
               <button
                 onClick={handleTryNowClick}
@@ -161,7 +204,7 @@ function App() {
                   fontSize: '1.2rem',
                   fontWeight: 600,
                   borderRadius: '12px',
-                  background: 'linear-gradient(90deg, #5227ff 0%, #8b5cf6 100%)',
+                  background: 'linear-gradient(90deg, #5227ff 0%,rgba(138, 92, 246, 0.03) 100%)',
                   color: '#fff',
                   border: 'none',
                   cursor: 'pointer',
@@ -170,7 +213,27 @@ function App() {
                 }}
                 aria-label="Scroll to QR Generator"
               >
-                Try Now
+                Generate QR
+              </button>
+              <button
+                onClick={() => alert('Read QR feature coming soon!')}
+                style={{
+                  marginTop: '2.5rem',
+                  marginLeft: '1rem',
+                  padding: '0.9rem 2.2rem',
+                  fontSize: '1.2rem',
+                  fontWeight: 600,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(90deg,rgba(138, 92, 246, 0.03) 0%,rgb(82, 39, 255) 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(82, 39, 255, 0.15)',
+                  transition: 'background 0.3s',
+                }}
+                aria-label="Read QR Code"
+              >
+                Read QR
               </button>
             </div>
             
@@ -185,11 +248,17 @@ function App() {
               spotlightRadius={400}
               particleCount={12}
               glowColor="132, 0, 255"
+              onUpiQRClick={handleUpiQRClick}
+              onTextQRClick={handleTextQRClick}
+              onWifiQRClick={handleWifiQRClick}
+              onVcardQRClick={handleVcardQRClick}
+              onUrlQRClick={handleUrlQRClick}
+              onQrCodeImgClick={handleQrCodeImgClick}
             />
           </div>
 
           <div ref={mainQRPanelRef}>
-            <MainQRPanel />
+            <MainQRPanel forceQrType={forceQrType} setForceQrType={setForceQrType} />
             <QRHistoryPanel
               open={showHistoryPanel}
               onClose={() => setShowHistoryPanel(false)}
@@ -197,6 +266,8 @@ function App() {
               onClearHistory={handleClearHistory}
               onLoadFromHistory={handleLoadFromHistory}
               dockHistoryBtnRect={historyBtnRect}
+              onExportHistory={handleExportHistory}
+              onImportHistory={handleImportHistory}
             />
           </div>
         </div>
